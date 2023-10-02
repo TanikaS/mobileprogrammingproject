@@ -1,0 +1,19 @@
+create database reseptiappi;
+use reseptiappi;
+ALTER DATABASE reseptiappi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+create user 'appiadmin'@'localhost' identified by 'heippa123';
+grant all on reseptiappi.* to admin@localhost;
+CREATE TABLE USER (
+   USER_ID INTEGER NOT NULL auto_increment,
+   SUKUNIMI VARCHAR(25),
+   ETUNIMI VARCHAR(25),
+   KÄYTTÄJÄNIMI VARCHAR(50),
+   HASHSALASANA VARCHAR (100) NOT NULL,
+   SALT VARCHAR (100) NOT NULL,
+   PRIMARY KEY (USER_ID)
+);
+CREATE TABLE RESEPTIT (
+   RESEPTI_ID INTEGER NOT NULL,
+   RESEPTI VARCHAR(8000),
+   PRIMARY KEY (RESEPTI_ID)
+);
