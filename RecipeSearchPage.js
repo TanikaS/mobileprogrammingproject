@@ -4,8 +4,8 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, FlatList, B
 
 //example recipes
 const recipes = [
-  { id: 1, name: 'Pesto Pasta', vegetarian: true, vegan: false, glutenFree: false, lactoseFree: false, noMilk: false, noEgg: false },
-  { id: 2, name: 'Caprese Salad', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: false, noEgg: true },
+  { id: 1, name: 'Pesto Pasta', vegetarian: true, vegan: false, glutenFree: false, lactoseFree: false, noMilk: false, noEgg: false, details: 'These are the ingredients youll need to make this easy pesto pasta recipe:', ingredients : '1 (16 ounce) package pasta, 2 tablespoons olive oil, ½ cup chopped onion, 2 ½ tablespoons pesto, salt to taste, ground black pepper to taste, 2 tablespoons grated Parmesan cheese', directions: 'Fill a large pot with lightly salted water and bring to a rolling boil. Stir in pasta and return to a boil. Cook pasta uncovered, stirring occasionally, until tender yet firm to the bite, about 8 to 10 minutes. Drain and transfer into a large bowl. Meanwhile, heat oil in a frying pan over medium-low heat. Add onion; cook and stir until softened, about 3 minutes. Stir in pesto, salt, and pepper until warmed through. Add pesto mixture to hot pasta; stir in grated cheese and toss well to coat.', nutrition: '225 Calories 7g Fat 32g Carbs 8g Protein'},
+  { id: 2, name: 'Caprese Salad', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: false, noEgg: true, details: "These are the ingredients youll need to make this easy pesto pasta recipe:", ingredients : "Pasta: Start with your favorite pasta shape. Onion and oil: Cook the onion in olive oil until it’s translucent. Pesto: Use store-bought or homemade pesto sauce. Seasonings: This pesto pasta is simply seasoned with salt and pepper. Cheese: Grate your own Parmesan cheese instead of using the pre-shredded stuff. "},
 ];
 
 const RecipeSearchPage = ({ navigation }) => {
