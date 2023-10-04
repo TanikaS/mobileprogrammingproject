@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react
 const HomePage = ({ navigation }) => {
   return (
     <View style={styles.container}>
+
       <ImageBackground
         source={require('./bg_img2.jpg')} 
         style={styles.backgroundImage}
@@ -23,10 +24,21 @@ const HomePage = ({ navigation }) => {
           onPress={() => navigation.navigate('AddRecipePage')} >
           <Text style={styles.buttonText}>Add recipes</Text>
         </TouchableOpacity>
+
+
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={() => navigation.navigate('Sign in')} 
+        >
+          <Text style={styles.buttonText}>Sign In</Text>
+        </TouchableOpacity>
       </ImageBackground>
     </View>
   );
 };
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -60,6 +72,13 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     color: 'white',
+  },
+  signInButton: {
+    backgroundColor: '#FF5733', 
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginTop: 20,
   },
 });
 

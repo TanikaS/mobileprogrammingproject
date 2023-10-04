@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Alert, TextInput, Pressable, StyleSheet, ScrollView, Modal, } from 'react-native';
-//import ImagePicker from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-picker';
+
 
 const categoryOptions = [
   'Vegetarian',
@@ -10,6 +11,7 @@ const categoryOptions = [
   'No Milk',
   'No Egg',
 ];
+
 
 const AddRecipePage = ({ navigation }) => {
   const [recipeImage, setRecipeImage] = useState(null);
@@ -30,7 +32,7 @@ const AddRecipePage = ({ navigation }) => {
       },
     };
 
-    ImagePicker.showImagePicker(options, (response) => {
+    ImagePicker.launchImageLibrary(options, (response) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
@@ -52,10 +54,8 @@ const AddRecipePage = ({ navigation }) => {
       Alert.alert('Validation Error', 'Please fill in all required fields.');
       return;
     }
-
-
+  
     const newRecipe = {
-      id: Math.random().toString(),
       image: recipeImage,
       title: recipeTitle,
       description: recipeDescription,
@@ -64,6 +64,27 @@ const AddRecipePage = ({ navigation }) => {
       ingredients: ingredients,
       instructions: instructions,
     };
+  
+
+    fetch('http://35.228.84.185:6000/recipes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newRecipe),
+    })
+      .then((response) => {
+        if (response.status === 201) {
+          navigation.goBack(); 
+        } else {
+
+          Alert.alert('Error', 'Failed to save the recipe.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        Alert.alert('Error', 'An error occurred while saving the recipe.');
+      });
 
 
     
@@ -86,14 +107,15 @@ const AddRecipePage = ({ navigation }) => {
           )}
         </TouchableOpacity>
       </View>
-
+      <Text style={styles.textInputLabel}>Recipe title:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Recipe Title"
+        placeholder="Title"
         value={recipeTitle}
         onChangeText={setRecipeTitle}
       />
 
+      <Text style={styles.textInputLabel}>Description:</Text>
       <TextInput
         style={styles.input}
         placeholder="Description"
@@ -104,11 +126,12 @@ const AddRecipePage = ({ navigation }) => {
       />
 
 
+<Text style={styles.textInputLabel}>Select category:</Text>
   <TouchableOpacity
     style={styles.input}
     onPress={() => setCategoryModalVisible(true)}
   >
-    <Text>{selectedCategory || 'Select Category'}</Text>
+    <Text>{selectedCategory || 'Category'}</Text>
   </TouchableOpacity>
 
   <Modal
@@ -133,14 +156,14 @@ const AddRecipePage = ({ navigation }) => {
       ))}
     </View>
   </Modal>
-
+  <Text style={styles.textInputLabel}>Cook time:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Cook Time"
+        placeholder="Cook time"
         value={cookTime}
         onChangeText={(text) => setCookTime(text)}
       />
-
+      <Text style={styles.textInputLabel}>Ingredients:</Text>
       <TextInput
         style={styles.input}
         placeholder="Ingredients"
@@ -149,7 +172,7 @@ const AddRecipePage = ({ navigation }) => {
         value={ingredients}
         onChangeText={(text) => setIngredients(text)}
       />
-
+      <Text style={styles.textInputLabel}>Instructions:</Text>
       <TextInput
         style={styles.input}
         placeholder="Instructions"
@@ -172,7 +195,7 @@ const AddRecipePage = ({ navigation }) => {
               },
               {
                 text: 'Save',
-                onPress: handleSaveRecipe,
+                onPress:() => handleSaveRecipe(),
               },
             ],
             { cancelable: false }
@@ -208,6 +231,14 @@ const styles = StyleSheet.create({
   recipeImage: {
     width: '100%',
     height: '100%',
+  },
+
+  textInputLabel: {
+    marginRight: 10, 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    color: 'black',
+    marginBottom: 5,
   },
   input: {
     borderColor: '#ddd',

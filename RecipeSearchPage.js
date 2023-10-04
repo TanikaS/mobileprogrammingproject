@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, FlatList, Button } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native'; 
 
-
-//example recipes
+// Example recipes
 const recipes = [
   { id: 1, name: 'Pesto Pasta', vegetarian: true, vegan: false, glutenFree: false, lactoseFree: false, noMilk: false, noEgg: false },
   { id: 2, name: 'Caprese Salad', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: false, noEgg: true },
+  { id: 3, name: 'Lentil Soup', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: true, noEgg: true },
 ];
 
-const RecipeSearchPage = ({ navigation }) => {
+const RecipeSearchPage = () => {
   const [searchText, setSearchText] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -21,9 +23,10 @@ const RecipeSearchPage = ({ navigation }) => {
   });
   const [searchResults, setSearchResults] = useState(recipes);
 
-  //finds recipes with keywords
-  const handleSearch = () => {
+  const navigation = useNavigation();
 
+  // Finds recipes with keywords
+  const handleSearch = () => {
     const filteredRecipes = recipes.filter((recipe) =>
       recipe.name.toLowerCase().includes(searchText.toLowerCase()) &&
       (!selectedFilters.vegetarian || recipe.vegetarian) &&
@@ -36,24 +39,23 @@ const RecipeSearchPage = ({ navigation }) => {
 
     setSearchResults(filteredRecipes);
   };
-  
-//searching + filter button
+
   return (
     <View style={styles.container}>
-    <View style={styles.searchContainer}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search for recipes..."
-        placeholderTextColor="#999"
-        onChangeText={(text) => setSearchText(text)}
-        value={searchText}
-      />
-      <TouchableOpacity
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search for recipes..."
+          placeholderTextColor="#999"
+          onChangeText={(text) => setSearchText(text)}
+          value={searchText}
+        />
+        <TouchableOpacity
           style={styles.searchButton}
           onPress={handleSearch}>
           <Text style={styles.buttonText}>Search</Text>
         </TouchableOpacity>
-</View>
+      </View>
 
       <TouchableOpacity
         style={styles.filterButton}
@@ -61,22 +63,21 @@ const RecipeSearchPage = ({ navigation }) => {
       >
         <Text style={styles.buttonText}>Filters</Text>
       </TouchableOpacity>
-   
 
-    {searchResults.length > 0 ? (
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.recipeItem}
-            onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
-          >
-            <Text style={styles.recipeName}>{item.name}</Text>
-          </TouchableOpacity>
-        )} 
-      />
-    ) : null}
+      {searchResults.length > 0 ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.recipeItem}
+              onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
+            >
+              <Text style={styles.recipeName}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : null}
 
 
 
@@ -184,7 +185,7 @@ const RecipeSearchPage = ({ navigation }) => {
                 style={styles.modalButton}
                 onPress={() => {
                   setFilterModalVisible(false);
-                  handleSearch(); // Apply filters and search
+                  handleSearch();
                 }}
               >
                 <Text style={styles.buttonText}>Apply Filters</Text>
