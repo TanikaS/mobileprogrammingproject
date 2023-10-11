@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, FlatList, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, FlatList, ImageBackground} from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native'; 
+import { fetchAllRecipes } from './routes/recipeRoutes';
+import RecipeDetail from './RecipeDetail';
 
-// Example recipes
-const recipes = [
-  { id: 1, name: 'Pesto Pasta', vegetarian: true, vegan: false, glutenFree: false, lactoseFree: false, noMilk: false, noEgg: false },
-  { id: 2, name: 'Caprese Salad', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: false, noEgg: true },
-  { id: 3, name: 'Lentil Soup', vegetarian: true, vegan: true, glutenFree: true, lactoseFree: true, noMilk: true, noEgg: true },
-];
-
-const RecipeSearchPage = () => {
+const RecipeSearchPage = ({ route }) => {
   const [searchText, setSearchText] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -21,26 +16,50 @@ const RecipeSearchPage = () => {
     noMilk: false,
     noEgg: false,
   });
-  const [searchResults, setSearchResults] = useState(recipes);
-
+  const [searchResults, setSearchResults] = useState([]);
+  const [allRecipes, setAllRecipes] = useState([]);
   const navigation = useNavigation();
 
-  // Finds recipes with keywords
-  const handleSearch = () => {
-    const filteredRecipes = recipes.filter((recipe) =>
-      recipe.name.toLowerCase().includes(searchText.toLowerCase()) &&
-      (!selectedFilters.vegetarian || recipe.vegetarian) &&
-      (!selectedFilters.vegan || recipe.vegan) &&
-      (!selectedFilters.glutenFree || recipe.glutenFree) &&
-      (!selectedFilters.lactoseFree || recipe.lactoseFree) &&
-      (!selectedFilters.noMilk || recipe.noMilk) &&
-      (!selectedFilters.noEgg || recipe.noEgg)
-    );
+  
+  useEffect(() => {
+    fetchAllRecipes()
+      .then((recipes) => {
+        setAllRecipes(recipes);
+        setSearchResults(recipes);
+      })
+      .catch((error) => {
+        console.error('Error fetching recipes: ', error);
+      });
+  }, []);
 
+  // Finds recipe with keywords
+  const handleSearch = () => {
+    console.log("search:", searchText)
+    const filteredRecipes = allRecipes.filter((recipe) => {
+      console.log("title:", recipe.title);
+      const titleMatch = recipe.title.toLowerCase().includes(searchText.toLowerCase());
+  
+      const categoryMatch =
+        (!selectedFilters.vegetarian || (recipe.category === 'Vegetarian')) &&
+        (!selectedFilters.vegan || (recipe.category === 'Vegan')) &&
+        (!selectedFilters.glutenFree || (recipe.category === 'Gluten Free')) &&
+        (!selectedFilters.lactoseFree || (recipe.category === 'Lactose Free')) &&
+        (!selectedFilters.noMilk || (recipe.category === 'No Milk')) &&
+        (!selectedFilters.noEgg || (recipe.category === 'No Egg'));
+  
+      return titleMatch && categoryMatch;
+    });
+  
     setSearchResults(filteredRecipes);
   };
+  
 
+  
   return (
+    <ImageBackground
+    source={require('./bg_img2.jpg')}
+    style={styles.backgroundImage}
+    >
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <TextInput
@@ -65,21 +84,25 @@ const RecipeSearchPage = () => {
       </TouchableOpacity>
 
       {searchResults.length > 0 ? (
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.recipeItem}
-              onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
-            >
-              <Text style={styles.recipeName}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      ) : null}
-
-
+       <FlatList
+         data={searchResults}
+         keyExtractor={(item) => item.id.toString()}
+         renderItem={({ item }) => (
+           <TouchableOpacity
+             style={styles.recipeItem}
+             onPress={() => navigation.navigate('RecipeDetail', { recipe: item })}
+           >
+             <Text style={styles.recipeName}>{item.title}</Text>
+             <Text style={styles.recipeDescription}>{item.description}</Text>
+             <Text>
+                  <Text style={styles.recipeCookTime}>Cook Time:</Text> {item.cookTime}
+            </Text>
+           </TouchableOpacity>
+         )}
+       />
+      ) : (
+        <Text style={styles.error}> No recipes found.</Text>
+      )}
 
 
 <Modal
@@ -202,6 +225,7 @@ const RecipeSearchPage = () => {
         </View>
       </Modal>
     </View>
+    </ImageBackground>
   );
 };
 
@@ -210,16 +234,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  error: {
+    color: 'black',
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#f2f2f2',
+  },
   filterButton: {
     backgroundColor: '#79AC78',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 25,
+    borderRadius: 20,
     marginBottom: 10,
   },
   buttonText: {
@@ -236,14 +273,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#79AC78',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 25,
+    borderRadius: 10,
     marginTop: 10,
   },
   modalButton2: {
     backgroundColor: '#ff5733',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 25,
+    borderRadius: 10,
     marginTop: 10,
   },
   searchContainer: {
@@ -254,7 +291,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     backgroundColor: 'white',
-    borderRadius: 25,
+    borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginRight: 10,
@@ -263,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#79AC78',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 25,
+    borderRadius: 20,
   },
   recipeItem: {
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -273,6 +310,13 @@ const styles = StyleSheet.create({
   },
   recipeName: {
     fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  recipeCookTime: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'black',
   },
   modalContainer: {
     flex: 1,
@@ -299,7 +343,7 @@ const styles = StyleSheet.create({
   selectedFilterItem: {
     backgroundColor: '#79AC78',
     padding: 10,
-    borderRadius: 25,
+    borderRadius: 10,
   },
   filterText: {
     fontSize: 16,
@@ -309,7 +353,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#79AC78',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 25,
+    borderRadius: 10,
     alignSelf: 'flex-end',
   },
 });

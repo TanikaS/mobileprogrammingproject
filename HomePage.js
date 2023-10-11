@@ -18,7 +18,7 @@ const HomePage = ({ navigation }) => {
         >
           <Text style={styles.buttonText}>Find recipes</Text>
         </TouchableOpacity>
-
+      
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('AddRecipePage')} >
@@ -26,12 +26,14 @@ const HomePage = ({ navigation }) => {
         </TouchableOpacity>
 
 
-        <TouchableOpacity
+
+        {/* <TouchableOpacity
           style={styles.signInButton}
-          onPress={() => navigation.navigate('Sign in')} 
-        >
+          onPress={() => navigation.navigate('LoginPage')} >
           <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+             </TouchableOpacity>
+               */}
+
       </ImageBackground>
     </View>
   );

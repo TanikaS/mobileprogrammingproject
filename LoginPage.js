@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { openDatabase } from 'react-native-sqlite-storage';
+import bcrypt from 'bcryptjs';
 
-const API_REGISTER_URL = 'http://10.0.2.2:6000/register'; 
-const API_LOGIN_URL = 'http://10.0.2.2:6000/login'; 
+
+const db = openDatabase({ name: 'app.db' });
+const saltRounds = 10; 
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -12,64 +15,86 @@ const LoginPage = ({ navigation }) => {
 
 
 
+
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    if (typeof password !== 'string' || password.trim() === '') {
+      setError('Invalid password.');
       return;
     }
-
-  
-    if (!validateEmail(email)) {
-      setError('Invalid email address.');
+    if (!validateEmail(email) || password !== confirmPassword) {
+      setError('Invalid email or passwords do not match.');
       return;
     }
 
     try {
-      const response = await fetch(API_REGISTER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.status === 200) {
-        const data = await response.json();
-        navigation.navigate('Home');
-      } else {
-        setError('Registration failed. Please try again.'); 
-      }
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      await insertUserIntoDatabase(email, hashedPassword);
+      navigation.navigate('Home');
     } catch (error) {
       console.error(error);
-      setError('An error occurred. Please try again later.');
+      setError('Registration failed.');
     }
   };
 
   const handleLogin = async () => {
-    try {
-      const response = await fetch(API_LOGIN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const userRecord = await getUserRecordFromDatabase(email);
+    if (!userRecord) {
+      setError('Login failed.');
+      return;
+    }
+    const passwordMatch = await bcrypt.compare(password, userRecord.hashedPassword);
 
-      if (response.status === 200) {
-        const data = await response.json();
-        navigation.navigate('Home');
-      } else {
-        setError('Login failed. Please check your email and password.'); 
-      }
-    } catch (error) {
-      console.error(error);
-      setError('An error occurred. Please try again later.');
+    if (passwordMatch) {
+      navigation.navigate('Home');
+    } else {
+      setError('Login failed.');
     }
   };
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
+  };
+
+
+  const insertUserIntoDatabase = (email, hashedPassword) => {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'INSERT INTO users (email, password) VALUES (?, ?);',
+          [email, hashedPassword],
+          (_, results) => {
+            resolve();
+          },
+          (error) => {
+            reject(error);
+          }
+        );
+      });
+    });
+  };
+
+
+  const getUserRecordFromDatabase = (email) => {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT * FROM users WHERE email = ?;',
+          [email],
+          (_, results) => {
+            if (results.rows.length > 0) {
+              const userRecord = results.rows.item(0);
+              resolve(userRecord);
+            } else {
+              resolve(null);
+            }
+          },
+          (error) => {
+            reject(error);
+          }
+        );
+      });
+    });
   };
 
   return (

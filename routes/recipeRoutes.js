@@ -1,78 +1,141 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../dbConfig');
+import { openDatabase } from 'react-native-sqlite-storage';
 
+const db = openDatabase({ name: 'app.db' });
 
-router.post('/recipes', (req, res) => {
-  const { title, description, category, cookTime, ingredients, instructions } = req.body;
-
-  pool.query(
-    'INSERT INTO recipes (title, description, category, cookTime, ingredients, instructions) VALUES (?, ?, ?, ?, ?, ?)',
-    [title, description, category, cookTime, ingredients, instructions],
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Internal server error' });
+export const createNewTable = () => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      'CREATE TABLE IF NOT EXISTS new_recipes ' +
+        '(id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
+        'title TEXT NOT NULL, ' +
+        'description TEXT, ' +
+        'category TEXT, ' +
+        'cookTime INTEGER, ' +
+        'ingredients TEXT, ' +
+        'instructions TEXT, ' +
+        'imageUri TEXT);',
+      [],
+      () => {
+        console.log('New table "new_recipes" created successfully.');
+      },
+      (error) => {
+        console.error('Error creating table "new_recipes":', error);
       }
-      res.status(201).json({ message: 'Recipe created successfully' });
-    }
-  );
-});
-
-router.get('/recipes', (req, res) => {
-
-  pool.query('SELECT * FROM recipes', (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-    res.status(200).json(results);
+    );
   });
-});
-
-router.get('/recipes/:id', (req, res) => {
-  const recipeId = req.params.id;
-
-  pool.query('SELECT * FROM recipes WHERE id = ?', [recipeId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-    if (results.length === 0) {
-      return res.status(404).json({ error: 'Recipe not found' });
-    }
-    res.status(200).json(results[0]);
+};
+export const addRecipe = (recipeData) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'INSERT INTO new_recipes (title, description, category, cookTime, ingredients, instructions, imageUri) ' +
+          'VALUES (?, ?, ?, ?, ?, ?, ?);',
+        [
+          recipeData.title,
+          recipeData.description,
+          recipeData.category,
+          recipeData.cookTime,
+          recipeData.ingredients,
+          recipeData.instructions,
+          recipeData.imageUri,
+        ],
+        (_, results) => {
+          const { insertId } = results;
+          resolve(insertId);
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
   });
-});
+  }
 
-router.put('/recipes/:id', (req, res) => {
-  const recipeId = req.params.id;
-  const { title, description, category, cookTime, ingredients, instructions } = req.body;
+  export const fetchRecipeById = (recipeId) => {
+    return new Promise((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT * FROM new_recipes WHERE id = ?;',
+          [recipeId],
+          (_, results) => {
+            if (results.rows.length > 0) {
+              const recipe = results.rows.item(0);
+              resolve(recipe);
+            } else {
+              resolve(null);
+            }
+          },
+          (error) => {
+            reject(error);
+          }
+        );
+      });
+    });
+  };
 
 
-  pool.query(
-    'UPDATE recipes SET title=?, description=?, category=?, cookTime=?, ingredients=?, instructions=? WHERE id=?',
-    [title, description, category, cookTime, ingredients, instructions, recipeId],
-    (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-      res.status(200).json({ message: 'Recipe updated successfully' });
-    }
-  );
-});
-
-router.delete('/recipes/:id', (req, res) => {
-  const recipeId = req.params.id;
-
-  pool.query('DELETE FROM recipes WHERE id = ?', [recipeId], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-    res.status(200).json({ message: 'Recipe deleted successfully' });
+export const updateRecipe = (id, recipeData) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'UPDATE new_recipes ' +
+          'SET title = ?, description = ?, category = ?, cookTime = ?, ingredients = ?, instructions = ?, imageUri = ? ' +
+          'WHERE id = ?;',
+        [
+          recipeData.title,
+          recipeData.description,
+          recipeData.category,
+          recipeData.cookTime,
+          recipeData.ingredients,
+          recipeData.instructions,
+          recipeData.imageUri,
+          id,
+        ],
+        () => {
+          resolve();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
   });
-});
+};
 
-module.exports = router;
+export const deleteRecipe = (id) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'DELETE FROM new_recipes WHERE id = ?;',
+        [id],
+        () => {
+          resolve();
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+export const fetchAllRecipes = () => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        'SELECT * FROM new_recipes;',
+        [],
+        (_, results) => {
+          const records = [];
+          for (let i = 0; i < results.rows.length; i++) {
+            records.push(results.rows.item(i));
+          }
+          resolve(records);
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  });
+};
